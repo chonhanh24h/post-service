@@ -5,14 +5,16 @@ import { Post, PostDocument } from '../schemas/post.schema';
 
 @Injectable()
 export class PostsService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) { }
 
   async findAll(query: any = {}): Promise<PostDocument[]> {
-    const { page, limit, ...filter } = query;
+    const { page, limit, q, ...filter } = query;
     const pageNumber = parseInt(page as string, 10) || 1;
     const limitNumber = 20;
     const skip = (pageNumber - 1) * limitNumber;
-
+    if (q) {
+      filter.title = { $regex: q, $options: 'i' };
+    }
     return this.postModel
       .find(filter)
       .sort({ createdAt: -1 })
