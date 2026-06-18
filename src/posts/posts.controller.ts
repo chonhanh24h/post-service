@@ -1,10 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PostsService } from './posts.service';
+import { S3Service } from './s3.service';
 
 @Controller()
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @MessagePattern({ cmd: 'get_all_posts' })
   async findAll(@Payload() query: any) {
@@ -34,5 +38,15 @@ export class PostsController {
   @MessagePattern({ cmd: 'remove_post' })
   async remove(@Payload() id: string) {
     return this.postsService.remove(id);
+  }
+
+  /**
+   * Generates a presigned S3 PUT URL so the browser can upload directly to S3.
+   * Called by the API Gateway when it receives POST /posts/upload-url.
+   * Returns { presignedUrl, imageUrl }.
+   */
+  @MessagePattern({ cmd: 'upload_presigned_url' })
+  async getUploadUrl(@Payload() payload: { fileName: string; fileType: string }) {
+    return this.s3Service.getPresignedUploadUrl(payload.fileName, payload.fileType);
   }
 }
