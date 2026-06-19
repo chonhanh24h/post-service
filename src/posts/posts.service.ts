@@ -8,16 +8,28 @@ export class PostsService {
   constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) { }
 
   async findAll(query: any = {}): Promise<PostDocument[]> {
-    const { page, limit, q, ...filter } = query;
+    const { page, limit, q, sort, ...filter } = query;
     const pageNumber = parseInt(page as string, 10) || 1;
     const limitNumber = 20;
     const skip = (pageNumber - 1) * limitNumber;
     if (q) {
       filter.title = { $regex: q, $options: 'i' };
     }
+    filter.status = 2;
+
+    let sortCondition: any = { createdAt: -1 };
+    switch (sort) {
+      case 'price_asc':
+        sortCondition = { price: 1 };
+        break;
+      case 'price_desc':
+        sortCondition = { price: -1 };
+        break;
+    }
+
     return this.postModel
       .find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortCondition)
       .skip(skip)
       .limit(limitNumber)
       .exec();
