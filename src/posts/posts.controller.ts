@@ -1,4 +1,5 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
+import { CreatePostDto } from './dto/create-post.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PostsService } from './posts.service';
 import { S3Service } from './s3.service';
@@ -8,7 +9,7 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly s3Service: S3Service,
-  ) {}
+  ) { }
 
   @MessagePattern({ cmd: 'get_all_posts' })
   async findAll(@Payload() query: any) {
@@ -25,8 +26,9 @@ export class PostsController {
     return this.postsService.findOne(id);
   }
 
+  @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   @MessagePattern({ cmd: 'create_post' })
-  async create(@Payload() createPostDto: any) {
+  async create(@Payload() createPostDto: CreatePostDto) {
     return this.postsService.create(createPostDto);
   }
 
