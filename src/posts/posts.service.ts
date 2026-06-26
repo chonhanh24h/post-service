@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Post, PostDocument } from '../schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -110,7 +111,44 @@ export class PostsService {
     return createdPost.save();
   }
 
-  async update(id: string, updatePostDto: any): Promise<PostDocument | null> {
+  async update(id: string, updatePostDto: UpdatePostDto): Promise<PostDocument | null> {
+    if (updatePostDto.categoryID) {
+      const category = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_category_by_id' }, updatePostDto.categoryID)).catch(() => null);
+      if (!category) {
+        throw new BadRequestException('Category not found');
+      }
+      updatePostDto.category = category.name;
+      updatePostDto.category_alias = category.alias;
+    }
+
+    if (updatePostDto.areaID) {
+      const area = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, updatePostDto.areaID)).catch(() => null);
+      if (!area) {
+        throw new BadRequestException('Area not found');
+      }
+      updatePostDto.area = area.name;
+      updatePostDto.area_alias = area.alias;
+    }
+
+    if (updatePostDto.cityID) {
+      const city = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, updatePostDto.cityID)).catch(() => null);
+      if (!city) {
+        throw new BadRequestException('City not found');
+      }
+      updatePostDto.city = city.name;
+      updatePostDto.city_alias = city.alias;
+    }
+
+    if (updatePostDto.user_name) {
+      updatePostDto.name = updatePostDto.user_name;
+    }
+    if (updatePostDto.user_email) {
+      updatePostDto.email = updatePostDto.user_email;
+    }
+    if (updatePostDto.user_phone) {
+      updatePostDto.phone = updatePostDto.user_phone;
+    }
+
     return this.postModel
       .findByIdAndUpdate(id, updatePostDto, { new: true })
       .exec();

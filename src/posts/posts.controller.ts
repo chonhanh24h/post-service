@@ -1,5 +1,6 @@
 import { Controller, UsePipes, ValidationPipe } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { PostsService } from './posts.service';
 import { S3Service } from './s3.service';
@@ -33,7 +34,7 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'update_post' })
-  async update(@Payload() data: any) {
+  async update(@Payload() data: { id: string; updatePostDto: UpdatePostDto }) {
     return this.postsService.update(data.id, data.updatePostDto);
   }
 
