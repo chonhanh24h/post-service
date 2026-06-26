@@ -50,7 +50,6 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {
-    console.log("createPostDto:: ", createPostDto);
     // Determine post status, default to 2 (Đã duyệt/Chờ duyệt) as per plan
     const status = 2;
 
@@ -60,9 +59,7 @@ export class PostsService {
       throw new BadRequestException('Category is required');
     }
 
-    console.log('categoryID:: ', categoryID);
     const category = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_category_by_id' }, categoryID)).catch(() => null);
-    console.log('category:: ', category);
     if (!category) {
       throw new BadRequestException('Category not found');
     }
@@ -75,7 +72,6 @@ export class PostsService {
         throw new BadRequestException('Area not found');
       }
     }
-    console.log('area:: ', area);
 
     let city = null;
     const cityID = createPostDto.cityID;
@@ -85,7 +81,6 @@ export class PostsService {
         throw new BadRequestException('City not found');
       }
     }
-    console.log('city:: ', city);
 
     const postData = {
       userID: createPostDto.userID,
@@ -108,9 +103,8 @@ export class PostsService {
       city: city?.name,
       city_alias: city?.alias,
       status: status,
+      address: createPostDto.address,
     };
-
-    console.log('postData:: ', postData);
 
     const createdPost = new this.postModel(postData);
     return createdPost.save();
