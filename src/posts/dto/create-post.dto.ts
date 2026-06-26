@@ -57,7 +57,7 @@ export class CreatePostDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  post_images: string[];
+  image: string[];
 
   @IsString()
   @IsOptional()

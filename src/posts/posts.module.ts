@@ -7,6 +7,9 @@ import { PostsController } from './posts.controller';
 import { S3Service } from './s3.service';
 import { Post, PostSchema } from '../schemas/post.schema';
 
+const configService = new ConfigService();
+console.log("host11", configService.get('CORE_SERVICE_HOST'));
+console.log("port", configService.get('CORE_SERVICE_PORT'));
 @Module({
   imports: [
     ConfigModule,
@@ -20,8 +23,8 @@ import { Post, PostSchema } from '../schemas/post.schema';
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
-            host: configService.get('CORE_SERVICE_HOST'),
-            port: configService.get('CORE_SERVICE_PORT'),
+            host: configService.get('CORE_SERVICE_HOST') || '127.0.0.1',
+            port: parseInt(configService.get('CORE_SERVICE_PORT') as string, 10) || 3002,
           },
         }),
         inject: [ConfigService],
@@ -32,5 +35,5 @@ import { Post, PostSchema } from '../schemas/post.schema';
   controllers: [PostsController],
   exports: [PostsService, S3Service],
 })
-export class PostsModule {}
+export class PostsModule { }
 

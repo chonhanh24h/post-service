@@ -19,6 +19,9 @@ export class S3Service {
     this.region = this.configService.get<string>('AWS_REGION') ?? 'ap-southeast-1';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') ?? '';
 
+    console.log('bucketName:: ', this);
+
+
     this.s3Client = new S3Client({
       region: this.region,
       credentials: {

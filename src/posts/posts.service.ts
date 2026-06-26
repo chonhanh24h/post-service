@@ -50,36 +50,42 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {
+    console.log("createPostDto:: ", createPostDto);
     // Determine post status, default to 2 (Đã duyệt/Chờ duyệt) as per plan
     const status = 2;
 
-    const categoryID = createPostDto.categoryID || (createPostDto as any).post_category;
+    const categoryID = createPostDto.categoryID;
+
     if (!categoryID) {
       throw new BadRequestException('Category is required');
     }
 
+    console.log('categoryID:: ', categoryID);
     const category = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_category_by_id' }, categoryID)).catch(() => null);
+    console.log('category:: ', category);
     if (!category) {
       throw new BadRequestException('Category not found');
     }
 
     let area = null;
-    const areaID = createPostDto.areaID || (createPostDto as any).post_area;
+    const areaID = createPostDto.areaID;
     if (areaID) {
       area = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, areaID)).catch(() => null);
       if (!area) {
         throw new BadRequestException('Area not found');
       }
     }
+    console.log('area:: ', area);
 
     let city = null;
-    const cityID = createPostDto.cityID || (createPostDto as any).post_city;
+    const cityID = createPostDto.cityID;
     if (cityID) {
       city = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, cityID)).catch(() => null);
       if (!city) {
         throw new BadRequestException('City not found');
       }
     }
+    console.log('city:: ', city);
 
     const postData = {
       userID: createPostDto.userID,
@@ -91,10 +97,10 @@ export class PostsService {
       category: category.name,
       category_alias: category.alias,
       post_type: createPostDto.post_type,
-      title: createPostDto.title || (createPostDto as any).post_title,
-      content: createPostDto.content || (createPostDto as any).post_content,
-      price: createPostDto.price || (createPostDto as any).post_price,
-      image: createPostDto.post_images || [],
+      title: createPostDto.title,
+      content: createPostDto.content,
+      price: createPostDto.price,
+      image: createPostDto.image || [],
       areaID: areaID,
       area: area?.name,
       area_alias: area?.alias,
@@ -103,6 +109,8 @@ export class PostsService {
       city_alias: city?.alias,
       status: status,
     };
+
+    console.log('postData:: ', postData);
 
     const createdPost = new this.postModel(postData);
     return createdPost.save();
