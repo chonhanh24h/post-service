@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Post, PostDocument } from '../schemas/post.schema';
@@ -13,6 +13,127 @@ export class PostsService {
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @Inject('CORE_SERVICE') private coreServiceClient: ClientProxy,
   ) { }
+
+  private readonly limit = 10;
+
+  // ==================== My Ads ====================
+  async myAdsAnalytic(userId: string) {
+    const posts = await this.postModel
+      .find({ userID: userId as any })
+      .select({ status: 1 })
+      .lean()
+      .exec();
+
+    const analytic = {
+      block: 0,
+      post: 0,
+      wait: 0,
+      done: 0,
+      cancel: 0,
+    };
+
+    if (posts && posts.length > 0) {
+      analytic.block = posts.filter((o: any) => o.status == 0).length;
+      analytic.post = posts.filter((o: any) => o.status == 2).length;
+      analytic.wait = posts.filter((o: any) => o.status == 1).length;
+      analytic.done = posts.filter((o: any) => o.status == 3).length;
+      analytic.cancel = posts.filter((o: any) => o.status == 4).length;
+    }
+
+    return analytic;
+  }
+
+  async myAds(userId: string, query: any) {
+    let page = 1;
+    const filter: any = { userID: userId as any };
+
+    if (query.page) {
+      page = parseInt(query.page, 10);
+    }
+    const skip = (page - 1) * this.limit;
+
+    if (query.type) {
+      filter.status = parseInt(query.type, 10);
+    }
+
+    const posts = await this.postModel
+      .find(filter)
+      .select({
+        category_alias: 1,
+        title: 1,
+        price: 1,
+        image: 1,
+        has_thumb: 1,
+        city: 1,
+        area: 1,
+        createdAt: 1,
+        status: 1,
+      })
+      .lean()
+      .skip(skip)
+      .limit(this.limit)
+      .sort({ createdAt: -1 })
+      .exec();
+
+    const pageNext = posts.length === this.limit ? page + 1 : null;
+    return { data: posts || [], pageNext, userID: userId };
+  }
+
+  async myAdsUpdateStatus(userId: string, body: any) {
+    const { id, type } = body;
+
+    if (!id || !type) {
+      throw new HttpException(
+        { status: false, msg: 'Không tìm thấy tin đăng phù hợp!' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const typeNum = parseInt(type, 10);
+    const query: any = { _id: id, userID: userId as any };
+    const statusConditions: any[] = [];
+
+    switch (typeNum) {
+      case 1:
+        statusConditions.push({ status: 4 });
+        break;
+      case 3:
+        statusConditions.push({ status: 2 });
+        break;
+      case 4:
+        statusConditions.push({ status: 1 }, { status: 2 });
+        break;
+      case 6:
+        statusConditions.push(
+          { status: 3 },
+          { status: 4 },
+          { status: 5 },
+        );
+        break;
+    }
+
+    query.$or = statusConditions;
+
+    const post = await this.postModel.findOne(query).select({ status: 1 }).exec();
+
+    if (post) {
+      post.status = typeNum;
+      try {
+        await post.save();
+        return { status: true, old_status: post.status };
+      } catch (err) {
+        throw new HttpException(
+          { status: false, msg: 'Cập nhật trạng thái thất bại!' },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    } else {
+      throw new HttpException(
+        { status: false, msg: 'Không tìm thấy tin đăng phù hợp!' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 
   async findAll(query: any = {}): Promise<PostDocument[]> {
     const { page, limit, q, sort, ...filter } = query;
@@ -48,6 +169,30 @@ export class PostsService {
 
   async findByUserId(userId: string): Promise<PostDocument[]> {
     return this.postModel.find({ userID: userId as any }).sort({ createdAt: -1 }).exec();
+  }
+
+  async getPostsByIds(ids: string[], skip: number, limit: number): Promise<any[]> {
+    return this.postModel
+      .find({ _id: { $in: ids } })
+      .select({
+        category_alias: 1,
+        title: 1,
+        price: 1,
+        image: 1,
+        has_thumb: 1,
+        area: 1,
+        city: 1,
+        createdAt: 1,
+      })
+      .lean()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async checkPostExists(id: string): Promise<number> {
+    return this.postModel.countDocuments({ _id: id }).exec();
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {

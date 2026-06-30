@@ -12,6 +12,23 @@ export class PostsController {
     private readonly s3Service: S3Service,
   ) { }
 
+  // ==================== My Ads ====================
+
+  @MessagePattern({ cmd: 'my_ads_analytic' })
+  async myAdsAnalytic(@Payload() data: { userId: string }) {
+    return this.postsService.myAdsAnalytic(data.userId);
+  }
+
+  @MessagePattern({ cmd: 'my_ads' })
+  async myAds(@Payload() data: { userId: string; query: any }) {
+    return this.postsService.myAds(data.userId, data.query);
+  }
+
+  @MessagePattern({ cmd: 'my_ads_update_status' })
+  async myAdsUpdateStatus(@Payload() data: { userId: string; body: any }) {
+    return this.postsService.myAdsUpdateStatus(data.userId, data.body);
+  }
+
   @MessagePattern({ cmd: 'get_all_posts' })
   async findAll(@Payload() query: any) {
     return this.postsService.findAll(query);
@@ -20,6 +37,16 @@ export class PostsController {
   @MessagePattern({ cmd: 'get_posts_by_user' })
   async findByUserId(@Payload() userId: string) {
     return this.postsService.findByUserId(userId);
+  }
+
+  @MessagePattern({ cmd: 'get_posts_by_ids' })
+  async getPostsByIds(@Payload() data: { ids: string[]; skip: number; limit: number }) {
+    return this.postsService.getPostsByIds(data.ids, data.skip, data.limit);
+  }
+
+  @MessagePattern({ cmd: 'check_post_exists' })
+  async checkPostExists(@Payload() id: string) {
+    return this.postsService.checkPostExists(id);
   }
 
   @MessagePattern({ cmd: 'get_post_by_id' })
