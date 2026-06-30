@@ -143,3 +143,11 @@ export class Post {
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);
+
+PostSchema.index({ userID: 1, createdAt: -1 });
+PostSchema.index({ status: 1, createdAt: -1 });
+PostSchema.index({ status: 1, price: 1 });
+
+PostSchema.index({ categoryID: 1, status: 1, createdAt: -1 });
+PostSchema.index({ cityID: 1, status: 1, createdAt: -1 });
+PostSchema.index({ areaID: 1, status: 1, createdAt: -1 });
