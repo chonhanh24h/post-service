@@ -12,8 +12,6 @@ export class PostsController {
     private readonly s3Service: S3Service,
   ) { }
 
-  // ==================== My Ads ====================
-
   @MessagePattern({ cmd: 'my_ads_analytic' })
   async myAdsAnalytic(@Payload() data: { userId: string }) {
     return this.postsService.myAdsAnalytic(data.userId);
