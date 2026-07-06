@@ -65,7 +65,11 @@ describe('PostsService', () => {
       const mockSort = jest.fn().mockReturnValue({ skip: mockSkip });
       mockPostModel.find.mockReturnValue({ sort: mockSort });
 
-      const result = await service.findAll({ page: '1', q: 'test', sort: 'price_asc' });
+      const result = await service.findAll({
+        page: '1',
+        q: 'test',
+        sort: 'price_asc',
+      });
 
       expect(mockPostModel.find).toHaveBeenCalledWith({
         title: { $regex: 'test', $options: 'i' },
@@ -106,38 +110,56 @@ describe('PostsService', () => {
 
   describe('create', () => {
     it('should throw BadRequestException if category is not provided', async () => {
-      await expect(service.create({} as any)).rejects.toThrow(BadRequestException);
+      await expect(service.create({} as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if category is not found', async () => {
       coreServiceClient.send.mockReturnValue(throwError(() => new Error()));
-      
-      await expect(service.create({ categoryID: 'cat1' } as any)).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.create({ categoryID: 'cat1' } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if area is not found', async () => {
       coreServiceClient.send.mockImplementation(({ cmd }) => {
-        if (cmd === 'get_category_by_id') return of({ name: 'cat', alias: 'cat' });
+        if (cmd === 'get_category_by_id')
+          return of({ name: 'cat', alias: 'cat' });
         if (cmd === 'get_city_by_id') return throwError(() => new Error());
       });
 
-      await expect(service.create({ categoryID: 'cat1', areaID: 'area1' } as any)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create({ categoryID: 'cat1', areaID: 'area1' } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if city is not found', async () => {
       coreServiceClient.send.mockImplementation(({ cmd }, id) => {
-        if (cmd === 'get_category_by_id') return of({ name: 'cat', alias: 'cat' });
-        if (cmd === 'get_city_by_id' && id === 'city1') return throwError(() => new Error());
-        if (cmd === 'get_city_by_id' && id === 'area1') return of({ name: 'area', alias: 'area' });
+        if (cmd === 'get_category_by_id')
+          return of({ name: 'cat', alias: 'cat' });
+        if (cmd === 'get_city_by_id' && id === 'city1')
+          return throwError(() => new Error());
+        if (cmd === 'get_city_by_id' && id === 'area1')
+          return of({ name: 'area', alias: 'area' });
       });
 
-      await expect(service.create({ categoryID: 'cat1', areaID: 'area1', cityID: 'city1' } as any)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.create({
+          categoryID: 'cat1',
+          areaID: 'area1',
+          cityID: 'city1',
+        } as any),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should successfully create a post', async () => {
       coreServiceClient.send.mockImplementation(({ cmd }) => {
-        if (cmd === 'get_category_by_id') return of({ name: 'cat', alias: 'cat-alias' });
-        if (cmd === 'get_city_by_id') return of({ name: 'city', alias: 'city-alias' });
+        if (cmd === 'get_category_by_id')
+          return of({ name: 'cat', alias: 'cat-alias' });
+        if (cmd === 'get_city_by_id')
+          return of({ name: 'city', alias: 'city-alias' });
       });
       mockPostModel.save.mockResolvedValue('createdPost');
 
@@ -151,14 +173,16 @@ describe('PostsService', () => {
 
       const result = await service.create(dto as any);
 
-      expect(mockPostModelConstructor).toHaveBeenCalledWith(expect.objectContaining({
-        userID: 'user1',
-        categoryID: 'cat1',
-        category: 'cat',
-        category_alias: 'cat-alias',
-        title: 'test title',
-        status: 2,
-      }));
+      expect(mockPostModelConstructor).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userID: 'user1',
+          categoryID: 'cat1',
+          category: 'cat',
+          category_alias: 'cat-alias',
+          title: 'test title',
+          status: 2,
+        }),
+      );
       expect(result).toEqual('createdPost');
     });
   });
@@ -170,7 +194,11 @@ describe('PostsService', () => {
 
       const result = await service.update('123', { title: 'new title' });
 
-      expect(mockPostModel.findByIdAndUpdate).toHaveBeenCalledWith('123', { title: 'new title' }, { new: true });
+      expect(mockPostModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        '123',
+        { title: 'new title' },
+        { new: true },
+      );
       expect(result).toEqual('updatedPost');
     });
   });

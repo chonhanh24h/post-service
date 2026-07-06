@@ -10,7 +10,7 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly s3Service: S3Service,
-  ) { }
+  ) {}
 
   @MessagePattern({ cmd: 'my_ads_analytic' })
   async myAdsAnalytic(@Payload() data: { userId: string }) {
@@ -38,7 +38,9 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'get_posts_by_ids' })
-  async getPostsByIds(@Payload() data: { ids: string[]; skip: number; limit: number }) {
+  async getPostsByIds(
+    @Payload() data: { ids: string[]; skip: number; limit: number },
+  ) {
     return this.postsService.getPostsByIds(data.ids, data.skip, data.limit);
   }
 
@@ -74,7 +76,12 @@ export class PostsController {
    * Returns { presignedUrl, imageUrl }.
    */
   @MessagePattern({ cmd: 'upload_presigned_url' })
-  async getUploadUrl(@Payload() payload: { fileName: string; fileType: string }) {
-    return this.s3Service.getPresignedUploadUrl(payload.fileName, payload.fileType);
+  async getUploadUrl(
+    @Payload() payload: { fileName: string; fileType: string },
+  ) {
+    return this.s3Service.getPresignedUploadUrl(
+      payload.fileName,
+      payload.fileType,
+    );
   }
 }

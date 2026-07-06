@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, Inject, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Inject,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Post, PostDocument } from '../schemas/post.schema';
@@ -12,7 +18,7 @@ export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @Inject('CORE_SERVICE') private coreServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly limit = 10;
 
@@ -104,17 +110,16 @@ export class PostsService {
         statusConditions.push({ status: 1 }, { status: 2 });
         break;
       case 6:
-        statusConditions.push(
-          { status: 3 },
-          { status: 4 },
-          { status: 5 },
-        );
+        statusConditions.push({ status: 3 }, { status: 4 }, { status: 5 });
         break;
     }
 
     query.$or = statusConditions;
 
-    const post = await this.postModel.findOne(query).select({ status: 1 }).exec();
+    const post = await this.postModel
+      .findOne(query)
+      .select({ status: 1 })
+      .exec();
 
     if (post) {
       post.status = typeNum;
@@ -168,10 +173,17 @@ export class PostsService {
   }
 
   async findByUserId(userId: string): Promise<PostDocument[]> {
-    return this.postModel.find({ userID: userId as any }).sort({ createdAt: -1 }).exec();
+    return this.postModel
+      .find({ userID: userId as any })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
-  async getPostsByIds(ids: string[], skip: number, limit: number): Promise<any[]> {
+  async getPostsByIds(
+    ids: string[],
+    skip: number,
+    limit: number,
+  ): Promise<any[]> {
     return this.postModel
       .find({ _id: { $in: ids } })
       .select({
@@ -205,7 +217,9 @@ export class PostsService {
       throw new BadRequestException('Category is required');
     }
 
-    const category = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_category_by_id' }, categoryID)).catch(() => null);
+    const category = await firstValueFrom(
+      this.coreServiceClient.send({ cmd: 'get_category_by_id' }, categoryID),
+    ).catch(() => null);
     if (!category) {
       throw new BadRequestException('Category not found');
     }
@@ -213,7 +227,9 @@ export class PostsService {
     let area = null;
     const areaID = createPostDto.areaID;
     if (areaID) {
-      area = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, areaID)).catch(() => null);
+      area = await firstValueFrom(
+        this.coreServiceClient.send({ cmd: 'get_city_by_id' }, areaID),
+      ).catch(() => null);
       if (!area) {
         throw new BadRequestException('Area not found');
       }
@@ -222,7 +238,9 @@ export class PostsService {
     let city = null;
     const cityID = createPostDto.cityID;
     if (cityID) {
-      city = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, cityID)).catch(() => null);
+      city = await firstValueFrom(
+        this.coreServiceClient.send({ cmd: 'get_city_by_id' }, cityID),
+      ).catch(() => null);
       if (!city) {
         throw new BadRequestException('City not found');
       }
@@ -256,9 +274,17 @@ export class PostsService {
     return createdPost.save();
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto): Promise<PostDocument | null> {
+  async update(
+    id: string,
+    updatePostDto: UpdatePostDto,
+  ): Promise<PostDocument | null> {
     if (updatePostDto.categoryID) {
-      const category = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_category_by_id' }, updatePostDto.categoryID)).catch(() => null);
+      const category = await firstValueFrom(
+        this.coreServiceClient.send(
+          { cmd: 'get_category_by_id' },
+          updatePostDto.categoryID,
+        ),
+      ).catch(() => null);
       if (!category) {
         throw new BadRequestException('Category not found');
       }
@@ -267,7 +293,12 @@ export class PostsService {
     }
 
     if (updatePostDto.areaID) {
-      const area = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, updatePostDto.areaID)).catch(() => null);
+      const area = await firstValueFrom(
+        this.coreServiceClient.send(
+          { cmd: 'get_city_by_id' },
+          updatePostDto.areaID,
+        ),
+      ).catch(() => null);
       if (!area) {
         throw new BadRequestException('Area not found');
       }
@@ -276,7 +307,12 @@ export class PostsService {
     }
 
     if (updatePostDto.cityID) {
-      const city = await firstValueFrom(this.coreServiceClient.send({ cmd: 'get_city_by_id' }, updatePostDto.cityID)).catch(() => null);
+      const city = await firstValueFrom(
+        this.coreServiceClient.send(
+          { cmd: 'get_city_by_id' },
+          updatePostDto.cityID,
+        ),
+      ).catch(() => null);
       if (!city) {
         throw new BadRequestException('City not found');
       }

@@ -8,14 +8,12 @@ import { S3Service } from './s3.service';
 import { Post, PostSchema } from '../schemas/post.schema';
 
 const configService = new ConfigService();
-console.log("host11", configService.get('CORE_SERVICE_HOST'));
-console.log("port", configService.get('CORE_SERVICE_PORT'));
+console.log('host11', configService.get('CORE_SERVICE_HOST'));
+console.log('port', configService.get('CORE_SERVICE_PORT'));
 @Module({
   imports: [
     ConfigModule,
-    MongooseModule.forFeature([
-      { name: Post.name, schema: PostSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     ClientsModule.registerAsync([
       {
         name: 'CORE_SERVICE',
@@ -24,7 +22,9 @@ console.log("port", configService.get('CORE_SERVICE_PORT'));
           transport: Transport.TCP,
           options: {
             host: configService.get('CORE_SERVICE_HOST') || '127.0.0.1',
-            port: parseInt(configService.get('CORE_SERVICE_PORT') as string, 10) || 3002,
+            port:
+              parseInt(configService.get('CORE_SERVICE_PORT') as string, 10) ||
+              3002,
           },
         }),
         inject: [ConfigService],
@@ -35,5 +35,4 @@ console.log("port", configService.get('CORE_SERVICE_PORT'));
   controllers: [PostsController],
   exports: [PostsService, S3Service],
 })
-export class PostsModule { }
-
+export class PostsModule {}
