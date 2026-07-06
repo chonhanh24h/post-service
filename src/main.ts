@@ -23,4 +23,4 @@ async function bootstrap() {
   await app.listen();
   console.log(`Post Microservice is running on port: ${port}`);
 }
-bootstrap();
+void bootstrap();

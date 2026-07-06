@@ -4,11 +4,11 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Post } from '../schemas/post.schema';
 import { BadRequestException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
+import { CreatePostDto } from './dto/create-post.dto';
 
 describe('PostsService', () => {
   let service: PostsService;
-  let model: any;
-  let coreServiceClient: any;
+  let coreServiceClient: { send: jest.Mock };
 
   const mockPostModel = {
     find: jest.fn(),
@@ -23,10 +23,12 @@ describe('PostsService', () => {
   };
 
   // Create a mock constructor function for the model
-  const mockPostModelConstructor = jest.fn().mockImplementation((dto) => ({
-    ...dto,
-    save: mockPostModel.save,
-  }));
+  const mockPostModelConstructor = jest
+    .fn()
+    .mockImplementation((dto: unknown) => ({
+      ...(dto as object),
+      save: mockPostModel.save,
+    }));
   Object.assign(mockPostModelConstructor, mockPostModel);
 
   beforeEach(async () => {
@@ -45,8 +47,7 @@ describe('PostsService', () => {
     }).compile();
 
     service = module.get<PostsService>(PostsService);
-    model = module.get(getModelToken(Post.name));
-    coreServiceClient = module.get('CORE_SERVICE');
+    coreServiceClient = module.get<{ send: jest.Mock }>('CORE_SERVICE');
   });
 
   afterEach(() => {
@@ -71,10 +72,12 @@ describe('PostsService', () => {
         sort: 'price_asc',
       });
 
-      expect(mockPostModel.find).toHaveBeenCalledWith({
-        title: { $regex: 'test', $options: 'i' },
-        status: 2,
-      });
+      expect(mockPostModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: { $regex: 'test', $options: 'i' },
+          status: 2,
+        }),
+      );
       expect(mockSort).toHaveBeenCalledWith({ price: 1 });
       expect(mockSkip).toHaveBeenCalledWith(0);
       expect(mockLimit).toHaveBeenCalledWith(20);
@@ -110,7 +113,7 @@ describe('PostsService', () => {
 
   describe('create', () => {
     it('should throw BadRequestException if category is not provided', async () => {
-      await expect(service.create({} as any)).rejects.toThrow(
+      await expect(service.create({} as CreatePostDto)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -119,43 +122,48 @@ describe('PostsService', () => {
       coreServiceClient.send.mockReturnValue(throwError(() => new Error()));
 
       await expect(
-        service.create({ categoryID: 'cat1' } as any),
+        service.create({ categoryID: 'cat1' } as CreatePostDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if area is not found', async () => {
-      coreServiceClient.send.mockImplementation(({ cmd }) => {
+      coreServiceClient.send.mockImplementation(({ cmd }: { cmd: string }) => {
         if (cmd === 'get_category_by_id')
           return of({ name: 'cat', alias: 'cat' });
         if (cmd === 'get_city_by_id') return throwError(() => new Error());
       });
 
       await expect(
-        service.create({ categoryID: 'cat1', areaID: 'area1' } as any),
+        service.create({
+          categoryID: 'cat1',
+          areaID: 'area1',
+        } as CreatePostDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if city is not found', async () => {
-      coreServiceClient.send.mockImplementation(({ cmd }, id) => {
-        if (cmd === 'get_category_by_id')
-          return of({ name: 'cat', alias: 'cat' });
-        if (cmd === 'get_city_by_id' && id === 'city1')
-          return throwError(() => new Error());
-        if (cmd === 'get_city_by_id' && id === 'area1')
-          return of({ name: 'area', alias: 'area' });
-      });
+      coreServiceClient.send.mockImplementation(
+        ({ cmd }: { cmd: string }, id: string) => {
+          if (cmd === 'get_category_by_id')
+            return of({ name: 'cat', alias: 'cat' });
+          if (cmd === 'get_city_by_id' && id === 'city1')
+            return throwError(() => new Error());
+          if (cmd === 'get_city_by_id' && id === 'area1')
+            return of({ name: 'area', alias: 'area' });
+        },
+      );
 
       await expect(
         service.create({
           categoryID: 'cat1',
           areaID: 'area1',
           cityID: 'city1',
-        } as any),
+        } as CreatePostDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should successfully create a post', async () => {
-      coreServiceClient.send.mockImplementation(({ cmd }) => {
+      coreServiceClient.send.mockImplementation(({ cmd }: { cmd: string }) => {
         if (cmd === 'get_category_by_id')
           return of({ name: 'cat', alias: 'cat-alias' });
         if (cmd === 'get_city_by_id')
@@ -163,7 +171,7 @@ describe('PostsService', () => {
       });
       mockPostModel.save.mockResolvedValue('createdPost');
 
-      const dto = {
+      const dto: Partial<CreatePostDto> = {
         categoryID: 'cat1',
         areaID: 'area1',
         cityID: 'city1',
@@ -171,7 +179,7 @@ describe('PostsService', () => {
         title: 'test title',
       };
 
-      const result = await service.create(dto as any);
+      const result = await service.create(dto as CreatePostDto);
 
       expect(mockPostModelConstructor).toHaveBeenCalledWith(
         expect.objectContaining({

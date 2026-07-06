@@ -6,26 +6,35 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from '../schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
+interface CategoryResponse {
+  name: string;
+  alias: string;
+}
+
+interface LocationResponse {
+  name: string;
+  alias: string;
+}
+
 @Injectable()
 export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @Inject('CORE_SERVICE') private coreServiceClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly limit = 10;
 
-  // ==================== My Ads ====================
   async myAdsAnalytic(userId: string) {
     const posts = await this.postModel
-      .find({ userID: userId as any })
+      .find({ userID: userId as unknown as Types.ObjectId, })
       .select({ status: 1 })
       .lean()
       .exec();
@@ -39,19 +48,31 @@ export class PostsService {
     };
 
     if (posts && posts.length > 0) {
-      analytic.block = posts.filter((o: any) => o.status == 0).length;
-      analytic.post = posts.filter((o: any) => o.status == 2).length;
-      analytic.wait = posts.filter((o: any) => o.status == 1).length;
-      analytic.done = posts.filter((o: any) => o.status == 3).length;
-      analytic.cancel = posts.filter((o: any) => o.status == 4).length;
+      analytic.block = posts.filter(
+        (o) => (o as { status: number }).status == 0,
+      ).length;
+      analytic.post = posts.filter(
+        (o) => (o as { status: number }).status == 2,
+      ).length;
+      analytic.wait = posts.filter(
+        (o) => (o as { status: number }).status == 1,
+      ).length;
+      analytic.done = posts.filter(
+        (o) => (o as { status: number }).status == 3,
+      ).length;
+      analytic.cancel = posts.filter(
+        (o) => (o as { status: number }).status == 4,
+      ).length;
     }
 
     return analytic;
   }
 
-  async myAds(userId: string, query: any) {
+  async myAds(userId: string, query: Record<string, string>) {
     let page = 1;
-    const filter: any = { userID: userId as any };
+    const filter: Record<string, unknown> = {
+      userID: userId as unknown as Types.ObjectId,
+    };
 
     if (query.page) {
       page = parseInt(query.page, 10);
@@ -85,19 +106,25 @@ export class PostsService {
     return { data: posts || [], pageNext, userID: userId };
   }
 
-  async myAdsUpdateStatus(userId: string, body: any) {
+  async myAdsUpdateStatus(userId: string, body: Record<string, string>) {
     const { id, type } = body;
 
     if (!id || !type) {
       throw new HttpException(
-        { status: false, msg: 'Không tìm thấy tin đăng phù hợp!' },
+        {
+          status: false,
+          msg: 'Kh\u00f4ng t\u00ecm th\u1ea5y tin \u0111\u0103ng ph\u00f9 h\u1ee3p!',
+        },
         HttpStatus.BAD_REQUEST,
       );
     }
 
     const typeNum = parseInt(type, 10);
-    const query: any = { _id: id, userID: userId as any };
-    const statusConditions: any[] = [];
+    const query: Record<string, unknown> = {
+      _id: id,
+      userID: userId as unknown as Types.ObjectId,
+    };
+    const statusConditions: { status: number }[] = [];
 
     switch (typeNum) {
       case 1:
@@ -114,7 +141,7 @@ export class PostsService {
         break;
     }
 
-    query.$or = statusConditions;
+    query['$or'] = statusConditions;
 
     const post = await this.postModel
       .findOne(query)
@@ -126,22 +153,29 @@ export class PostsService {
       try {
         await post.save();
         return { status: true, old_status: post.status };
-      } catch (err) {
+      } catch {
         throw new HttpException(
-          { status: false, msg: 'Cập nhật trạng thái thất bại!' },
+          {
+            status: false,
+            msg: 'C\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i th\u1ea5t b\u1ea1i!',
+          },
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
     } else {
       throw new HttpException(
-        { status: false, msg: 'Không tìm thấy tin đăng phù hợp!' },
+        {
+          status: false,
+          msg: 'Kh\u00f4ng t\u00ecm th\u1ea5y tin \u0111\u0103ng ph\u00f9 h\u1ee3p!',
+        },
         HttpStatus.BAD_REQUEST,
       );
     }
   }
 
-  async findAll(query: any = {}): Promise<PostDocument[]> {
+  async findAll(query: Record<string, unknown> = {}): Promise<PostDocument[]> {
     const { page, limit, q, sort, ...filter } = query;
+    void limit;
     const pageNumber = parseInt(page as string, 10) || 1;
     const limitNumber = 20;
     const skip = (pageNumber - 1) * limitNumber;
@@ -150,13 +184,16 @@ export class PostsService {
     }
     filter.status = 2;
 
-    let sortCondition: any = { createdAt: -1 };
+    let sortCondition = {};
     switch (sort) {
       case 'price_asc':
         sortCondition = { price: 1 };
         break;
       case 'price_desc':
         sortCondition = { price: -1 };
+        break;
+      default:
+        sortCondition = { createdAt: -1 };
         break;
     }
 
@@ -174,7 +211,7 @@ export class PostsService {
 
   async findByUserId(userId: string): Promise<PostDocument[]> {
     return this.postModel
-      .find({ userID: userId as any })
+      .find({ userID: userId as unknown as Types.ObjectId })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -183,7 +220,7 @@ export class PostsService {
     ids: string[],
     skip: number,
     limit: number,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     return this.postModel
       .find({ _id: { $in: ids } })
       .select({
@@ -208,7 +245,7 @@ export class PostsService {
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {
-    // Determine post status, default to 2 (Đã duyệt/Chờ duyệt) as per plan
+    // Determine post status, default to 2 (Da duyet/Cho duyet) as per plan
     const status = 2;
 
     const categoryID = createPostDto.categoryID;
@@ -217,29 +254,38 @@ export class PostsService {
       throw new BadRequestException('Category is required');
     }
 
-    const category = await firstValueFrom(
-      this.coreServiceClient.send({ cmd: 'get_category_by_id' }, categoryID),
+    const category = await firstValueFrom<CategoryResponse>(
+      this.coreServiceClient.send<CategoryResponse>(
+        { cmd: 'get_category_by_id' },
+        categoryID,
+      ),
     ).catch(() => null);
     if (!category) {
       throw new BadRequestException('Category not found');
     }
 
-    let area = null;
+    let area: LocationResponse | null = null;
     const areaID = createPostDto.areaID;
     if (areaID) {
-      area = await firstValueFrom(
-        this.coreServiceClient.send({ cmd: 'get_city_by_id' }, areaID),
+      area = await firstValueFrom<LocationResponse>(
+        this.coreServiceClient.send<LocationResponse>(
+          { cmd: 'get_city_by_id' },
+          areaID,
+        ),
       ).catch(() => null);
       if (!area) {
         throw new BadRequestException('Area not found');
       }
     }
 
-    let city = null;
+    let city: LocationResponse | null = null;
     const cityID = createPostDto.cityID;
     if (cityID) {
-      city = await firstValueFrom(
-        this.coreServiceClient.send({ cmd: 'get_city_by_id' }, cityID),
+      city = await firstValueFrom<LocationResponse>(
+        this.coreServiceClient.send<LocationResponse>(
+          { cmd: 'get_city_by_id' },
+          cityID,
+        ),
       ).catch(() => null);
       if (!city) {
         throw new BadRequestException('City not found');
@@ -279,8 +325,8 @@ export class PostsService {
     updatePostDto: UpdatePostDto,
   ): Promise<PostDocument | null> {
     if (updatePostDto.categoryID) {
-      const category = await firstValueFrom(
-        this.coreServiceClient.send(
+      const category = await firstValueFrom<CategoryResponse>(
+        this.coreServiceClient.send<CategoryResponse>(
           { cmd: 'get_category_by_id' },
           updatePostDto.categoryID,
         ),
@@ -293,8 +339,8 @@ export class PostsService {
     }
 
     if (updatePostDto.areaID) {
-      const area = await firstValueFrom(
-        this.coreServiceClient.send(
+      const area = await firstValueFrom<LocationResponse>(
+        this.coreServiceClient.send<LocationResponse>(
           { cmd: 'get_city_by_id' },
           updatePostDto.areaID,
         ),
@@ -307,8 +353,8 @@ export class PostsService {
     }
 
     if (updatePostDto.cityID) {
-      const city = await firstValueFrom(
-        this.coreServiceClient.send(
+      const city = await firstValueFrom<LocationResponse>(
+        this.coreServiceClient.send<LocationResponse>(
           { cmd: 'get_city_by_id' },
           updatePostDto.cityID,
         ),
@@ -335,7 +381,7 @@ export class PostsService {
       .exec();
   }
 
-  async remove(id: string): Promise<any> {
+  async remove(id: string): Promise<unknown> {
     return this.postModel.findByIdAndDelete(id).exec();
   }
 }

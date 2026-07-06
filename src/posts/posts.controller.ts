@@ -18,17 +18,21 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'my_ads' })
-  async myAds(@Payload() data: { userId: string; query: any }) {
+  async myAds(
+    @Payload() data: { userId: string; query: Record<string, string> },
+  ) {
     return this.postsService.myAds(data.userId, data.query);
   }
 
   @MessagePattern({ cmd: 'my_ads_update_status' })
-  async myAdsUpdateStatus(@Payload() data: { userId: string; body: any }) {
+  async myAdsUpdateStatus(
+    @Payload() data: { userId: string; body: Record<string, string> },
+  ) {
     return this.postsService.myAdsUpdateStatus(data.userId, data.body);
   }
 
   @MessagePattern({ cmd: 'get_all_posts' })
-  async findAll(@Payload() query: any) {
+  async findAll(@Payload() query: Record<string, unknown>) {
     return this.postsService.findAll(query);
   }
 
@@ -66,7 +70,7 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'remove_post' })
-  async remove(@Payload() id: string) {
+  async remove(@Payload() id: string): Promise<unknown> {
     return this.postsService.remove(id);
   }
 
