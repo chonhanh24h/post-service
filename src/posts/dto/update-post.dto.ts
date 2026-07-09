@@ -1,4 +1,13 @@
-import { IsString, Length, IsInt, Min, IsEmail, IsOptional, IsArray, IsNumber } from 'class-validator';
+import {
+  IsString,
+  Length,
+  IsInt,
+  Min,
+  IsEmail,
+  IsOptional,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdatePostDto {

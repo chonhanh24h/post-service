@@ -16,11 +16,11 @@ export class S3Service {
 
   constructor(private readonly configService: ConfigService) {
     // AWS credentials loaded from environment variables (never hardcode these)
-    this.region = this.configService.get<string>('AWS_REGION') ?? 'ap-southeast-1';
+    this.region =
+      this.configService.get<string>('AWS_REGION') ?? 'ap-southeast-1';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') ?? '';
 
     console.log('bucketName:: ', this);
-
 
     this.s3Client = new S3Client({
       region: this.region,
@@ -28,7 +28,8 @@ export class S3Service {
         // AWS IAM access key ID — set in .env as AWS_ACCESS_KEY_ID
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID') ?? '',
         // AWS IAM secret access key — set in .env as AWS_SECRET_ACCESS_KEY
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY') ?? '',
+        secretAccessKey:
+          this.configService.get<string>('AWS_SECRET_ACCESS_KEY') ?? '',
       },
     });
   }

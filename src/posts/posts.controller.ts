@@ -10,9 +10,7 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly s3Service: S3Service,
-  ) { }
-
-  // ==================== My Ads ====================
+  ) {}
 
   @MessagePattern({ cmd: 'my_ads_analytic' })
   async myAdsAnalytic(@Payload() data: { userId: string }) {
@@ -20,17 +18,21 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'my_ads' })
-  async myAds(@Payload() data: { userId: string; query: any }) {
+  async myAds(
+    @Payload() data: { userId: string; query: Record<string, string> },
+  ) {
     return this.postsService.myAds(data.userId, data.query);
   }
 
   @MessagePattern({ cmd: 'my_ads_update_status' })
-  async myAdsUpdateStatus(@Payload() data: { userId: string; body: any }) {
+  async myAdsUpdateStatus(
+    @Payload() data: { userId: string; body: Record<string, string> },
+  ) {
     return this.postsService.myAdsUpdateStatus(data.userId, data.body);
   }
 
   @MessagePattern({ cmd: 'get_all_posts' })
-  async findAll(@Payload() query: any) {
+  async findAll(@Payload() query: Record<string, unknown>) {
     return this.postsService.findAll(query);
   }
 
@@ -40,7 +42,9 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'get_posts_by_ids' })
-  async getPostsByIds(@Payload() data: { ids: string[]; skip: number; limit: number }) {
+  async getPostsByIds(
+    @Payload() data: { ids: string[]; skip: number; limit: number },
+  ) {
     return this.postsService.getPostsByIds(data.ids, data.skip, data.limit);
   }
 
@@ -66,7 +70,7 @@ export class PostsController {
   }
 
   @MessagePattern({ cmd: 'remove_post' })
-  async remove(@Payload() id: string) {
+  async remove(@Payload() id: string): Promise<unknown> {
     return this.postsService.remove(id);
   }
 
@@ -76,7 +80,12 @@ export class PostsController {
    * Returns { presignedUrl, imageUrl }.
    */
   @MessagePattern({ cmd: 'upload_presigned_url' })
-  async getUploadUrl(@Payload() payload: { fileName: string; fileType: string }) {
-    return this.s3Service.getPresignedUploadUrl(payload.fileName, payload.fileType);
+  async getUploadUrl(
+    @Payload() payload: { fileName: string; fileType: string },
+  ) {
+    return this.s3Service.getPresignedUploadUrl(
+      payload.fileName,
+      payload.fileType,
+    );
   }
 }

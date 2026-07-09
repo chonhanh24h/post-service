@@ -1,4 +1,14 @@
-import { IsNotEmpty, IsString, Length, IsInt, Min, IsEmail, IsOptional, IsArray, IsNumber } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Length,
+  IsInt,
+  Min,
+  IsEmail,
+  IsOptional,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePostDto {
