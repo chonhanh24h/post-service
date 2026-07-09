@@ -28,13 +28,13 @@ export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @Inject('CORE_SERVICE') private coreServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly limit = 10;
 
   async myAdsAnalytic(userId: string) {
     const posts = await this.postModel
-      .find({ userID: userId as unknown as Types.ObjectId, })
+      .find({ userID: userId as unknown as Types.ObjectId })
       .select({ status: 1 })
       .lean()
       .exec();
