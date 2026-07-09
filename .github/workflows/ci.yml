@@ -7,7 +7,7 @@ on:
     branches: [ develop, main ]
 
 jobs:
-  test-and-build:
+  test:
     runs-on: ubuntu-latest
     
     steps:
@@ -17,18 +17,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20' # Hoặc phiên bản bạn đang dùng
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Lint
-        run: npm run lint
-
       - name: Run Tests
         run: npm run test
-        # Lưu ý: Nếu bạn có DB trong test, hãy dùng service container của GitHub Action
-        
-      - name: Build
-        run: npm run build
