@@ -5,6 +5,7 @@ import { Post } from '../schemas/post.schema';
 import { BadRequestException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { CreatePostDto } from './dto/create-post.dto';
+import { Types } from 'mongoose';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -103,9 +104,11 @@ describe('PostsService', () => {
       const mockSort = jest.fn().mockReturnValue({ exec: mockExec });
       mockPostModel.find.mockReturnValue({ sort: mockSort });
 
-      const result = await service.findByUserId('user1');
+      const result = await service.findByUserId('6a51030d2b2b78d3068894a6');
 
-      expect(mockPostModel.find).toHaveBeenCalledWith({ userID: 'user1' });
+      expect(mockPostModel.find).toHaveBeenCalledWith({
+        userID: new Types.ObjectId('6a51030d2b2b78d3068894a6'),
+      });
       expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(result).toEqual(['post1']);
     });

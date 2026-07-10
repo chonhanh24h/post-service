@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type PostDocument = HydratedDocument<Post>;
 
@@ -19,11 +19,11 @@ export class Post {
   user_type: number; // 1: personal | 2: company
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  userID: MongooseSchema.Types.ObjectId;
+  userID: Types.ObjectId;
 
   // post content
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Category' })
-  categoryID: MongooseSchema.Types.ObjectId;
+  categoryID: Types.ObjectId;
 
   @Prop()
   category: string;
@@ -59,7 +59,7 @@ export class Post {
   area_alias: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'City' })
-  areaID: MongooseSchema.Types.ObjectId;
+  areaID: Types.ObjectId;
 
   @Prop()
   city: string;
@@ -68,7 +68,7 @@ export class Post {
   city_alias: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'City' })
-  cityID: MongooseSchema.Types.ObjectId;
+  cityID: Types.ObjectId;
 
   @Prop()
   address: string;
@@ -87,7 +87,7 @@ export class Post {
   maker_alias: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Category' })
-  makerID: MongooseSchema.Types.ObjectId;
+  makerID: Types.ObjectId;
 
   @Prop()
   series: string;
@@ -96,7 +96,7 @@ export class Post {
   series_alias: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Category' })
-  series_id: MongooseSchema.Types.ObjectId;
+  series_id: Types.ObjectId;
 
   @Prop()
   year: string;
