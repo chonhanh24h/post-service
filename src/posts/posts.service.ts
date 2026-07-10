@@ -34,7 +34,7 @@ export class PostsService {
 
   async myAdsAnalytic(userId: string) {
     const posts = await this.postModel
-      .find({ userID: userId as unknown as Types.ObjectId })
+      .find({ userID: new Types.ObjectId(userId) })
       .select({ status: 1 })
       .lean()
       .exec();
@@ -71,7 +71,7 @@ export class PostsService {
   async myAds(userId: string, query: Record<string, string>) {
     let page = 1;
     const filter: Record<string, unknown> = {
-      userID: userId as unknown as Types.ObjectId,
+      userID: new Types.ObjectId(userId),
     };
 
     if (query.page) {
@@ -122,7 +122,7 @@ export class PostsService {
     const typeNum = parseInt(type, 10);
     const query: Record<string, unknown> = {
       _id: id,
-      userID: userId as unknown as Types.ObjectId,
+      userID: new Types.ObjectId(userId),
     };
     const statusConditions: { status: number }[] = [];
 
@@ -211,7 +211,7 @@ export class PostsService {
 
   async findByUserId(userId: string): Promise<PostDocument[]> {
     return this.postModel
-      .find({ userID: userId as unknown as Types.ObjectId })
+      .find({ userID: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .exec();
   }
