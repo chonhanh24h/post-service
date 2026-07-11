@@ -241,7 +241,11 @@ export class PostsService {
   }
 
   async checkPostExists(id: string): Promise<number> {
-    return this.postModel.countDocuments({ _id: id }).exec();
+    console.log('id', id);
+
+    return this.postModel
+      .countDocuments({ _id: new Types.ObjectId(id) })
+      .exec();
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {

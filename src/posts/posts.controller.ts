@@ -50,6 +50,7 @@ export class PostsController {
 
   @MessagePattern({ cmd: 'check_post_exists' })
   async checkPostExists(@Payload() id: string) {
+    console.log('id from post service', id);
     return this.postsService.checkPostExists(id);
   }
 
