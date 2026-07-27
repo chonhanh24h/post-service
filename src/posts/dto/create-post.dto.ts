@@ -7,36 +7,38 @@ import {
   IsEmail,
   IsOptional,
   IsArray,
-  IsNumber,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PostType, UserType } from '../const/post.enum';
+import { VALIDATION_MESSAGES } from '../const/posts.const';
 
 export class CreatePostDto {
-  @IsNotEmpty({ message: 'Vui lòng cung cấp userID!' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.USER_ID_REQUIRED })
   @IsString()
   userID: string;
 
-  @IsNotEmpty({ message: 'Vui lòng chọn/điền vào thông tin này!' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.FIELD_REQUIRED })
   @IsString()
   categoryID: string;
 
-  @IsNotEmpty({ message: 'Vui lòng chọn/điền vào thông tin này!' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.FIELD_REQUIRED })
   @Type(() => Number)
-  @IsNumber()
-  post_type: number;
+  @IsEnum(PostType)
+  post_type: PostType;
 
   @IsString()
-  @Length(1, 200, { message: 'Tiêu đề không vượt quá 200 ký tự' })
-  @IsNotEmpty({ message: 'Vui lòng chọn/điền vào thông tin này!' })
+  @Length(1, 200, { message: VALIDATION_MESSAGES.TITLE_LENGTH })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.FIELD_REQUIRED })
   title: string;
 
   @Type(() => Number)
-  @IsInt({ message: 'Giá của sản phẩm phải là số nguyên dương lớn hơn 100' })
-  @Min(100, { message: 'Giá của sản phẩm phải là số nguyên dương lớn hơn 100' })
-  @IsNotEmpty({ message: 'Vui lòng chọn/điền vào thông tin này!' })
+  @IsInt({ message: VALIDATION_MESSAGES.PRICE_MIN })
+  @Min(100, { message: VALIDATION_MESSAGES.PRICE_MIN })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.FIELD_REQUIRED })
   price: number;
 
-  @IsEmail({}, { message: 'Định dạng email không hợp lệ' })
+  @IsEmail({}, { message: VALIDATION_MESSAGES.INVALID_EMAIL })
   user_email: string;
 
   @IsString()
@@ -49,8 +51,8 @@ export class CreatePostDto {
 
   @Type(() => Number)
   @IsOptional()
-  @IsNumber()
-  user_type: number;
+  @IsEnum(UserType)
+  user_type: UserType;
 
   @IsString()
   @IsOptional()
