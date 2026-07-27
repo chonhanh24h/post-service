@@ -6,6 +6,7 @@ import { BadRequestException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { CreatePostDto } from './dto/create-post.dto';
 import { Types } from 'mongoose';
+import { PostStatus } from './const/post.enum';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -76,7 +77,7 @@ describe('PostsService', () => {
       expect(mockPostModel.find).toHaveBeenCalledWith(
         expect.objectContaining({
           title: { $regex: 'test', $options: 'i' },
-          status: 2,
+          status: PostStatus.APPROVED,
         }),
       );
       expect(mockSort).toHaveBeenCalledWith({ price: 1 });
@@ -191,7 +192,7 @@ describe('PostsService', () => {
           category: 'cat',
           category_alias: 'cat-alias',
           title: 'test title',
-          status: 2,
+          status: PostStatus.APPROVED,
         }),
       );
       expect(result).toEqual('createdPost');

@@ -6,9 +6,11 @@ import {
   IsEmail,
   IsOptional,
   IsArray,
-  IsNumber,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PostType, UserType } from '../const/post.enum';
+import { VALIDATION_MESSAGES } from '../const/posts.const';
 
 export class UpdatePostDto {
   @IsString()
@@ -20,22 +22,22 @@ export class UpdatePostDto {
   categoryID?: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsEnum(PostType)
   @IsOptional()
-  post_type?: number;
+  post_type?: PostType;
 
   @IsString()
-  @Length(1, 200, { message: 'Tiêu đề không vượt quá 200 ký tự' })
+  @Length(1, 200, { message: VALIDATION_MESSAGES.TITLE_LENGTH })
   @IsOptional()
   title?: string;
 
   @Type(() => Number)
-  @IsInt({ message: 'Giá của sản phẩm phải là số nguyên dương lớn hơn 100' })
-  @Min(100, { message: 'Giá của sản phẩm phải là số nguyên dương lớn hơn 100' })
+  @IsInt({ message: VALIDATION_MESSAGES.PRICE_MIN })
+  @Min(100, { message: VALIDATION_MESSAGES.PRICE_MIN })
   @IsOptional()
   price?: number;
 
-  @IsEmail({}, { message: 'Định dạng email không hợp lệ' })
+  @IsEmail({}, { message: VALIDATION_MESSAGES.INVALID_EMAIL })
   @IsOptional()
   user_email?: string;
 
@@ -48,9 +50,9 @@ export class UpdatePostDto {
   user_name?: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsEnum(UserType)
   @IsOptional()
-  user_type?: number;
+  user_type?: UserType;
 
   @IsString()
   @IsOptional()
