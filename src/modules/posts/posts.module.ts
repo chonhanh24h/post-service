@@ -5,7 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
 import { S3Service } from './s3.service';
-import { Post, PostSchema } from '../schemas/post.schema';
+import { Post, PostSchema } from './post.schema';
 
 @Module({
   imports: [

@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PostType, UserType } from '../const/post.enum';
-import { VALIDATION_MESSAGES } from '../const/posts.const';
+import { VALIDATION_MESSAGES } from '../posts.consts';
 
 export class CreatePostDto {
   @IsNotEmpty({ message: VALIDATION_MESSAGES.USER_ID_REQUIRED })

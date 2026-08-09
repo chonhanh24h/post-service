@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Post, PostDocument } from '../schemas/post.schema';
+import { Post, PostDocument } from './post.schema';
 import { PostStatus } from './const/post.enum';
-import { POST_ERROR_MESSAGES } from './const/posts.const';
+import { POST_ERROR_MESSAGES } from './posts.consts';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ClientProxy } from '@nestjs/microservices';

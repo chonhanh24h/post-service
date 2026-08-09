@@ -1,11 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
-import {
-  PostStatus,
-  PostType,
-  AdsType,
-  UserType,
-} from '../posts/const/post.enum';
+import { PostStatus, PostType, AdsType, UserType } from './const/post.enum';
 
 export type PostDocument = HydratedDocument<Post>;
 
@@ -20,7 +15,11 @@ export class Post {
   @Prop()
   name: string;
 
-  @Prop({ type: Number, enum: Object.values(UserType).filter((v) => typeof v === 'number'), default: UserType.PERSONAL })
+  @Prop({
+    type: Number,
+    enum: Object.values(UserType).filter((v) => typeof v === 'number'),
+    default: UserType.PERSONAL,
+  })
   user_type: UserType;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
@@ -35,7 +34,11 @@ export class Post {
   @Prop()
   category_alias: string;
 
-  @Prop({ type: Number, enum: Object.values(PostType).filter((v) => typeof v === 'number'), default: PostType.SALE })
+  @Prop({
+    type: Number,
+    enum: Object.values(PostType).filter((v) => typeof v === 'number'),
+    default: PostType.SALE,
+  })
   post_type: PostType;
 
   @Prop()
@@ -77,10 +80,18 @@ export class Post {
   @Prop()
   address: string;
 
-  @Prop({ type: Number, enum: Object.values(PostStatus).filter((v) => typeof v === 'number'), default: PostStatus.PENDING })
+  @Prop({
+    type: Number,
+    enum: Object.values(PostStatus).filter((v) => typeof v === 'number'),
+    default: PostStatus.PENDING,
+  })
   status: PostStatus;
 
-  @Prop({ type: Number, enum: Object.values(AdsType).filter((v) => typeof v === 'number'), default: AdsType.FREE })
+  @Prop({
+    type: Number,
+    enum: Object.values(AdsType).filter((v) => typeof v === 'number'),
+    default: AdsType.FREE,
+  })
   ads_type: AdsType;
 
   // OPTION == XE CỘ

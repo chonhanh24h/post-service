@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsService } from './posts.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { Post } from '../schemas/post.schema';
+import { Post } from './post.schema';
 import { BadRequestException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { CreatePostDto } from './dto/create-post.dto';
