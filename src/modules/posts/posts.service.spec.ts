@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsService } from './posts.service';
 import { getModelToken } from '@nestjs/mongoose';
-import { Post } from '../schemas/post.schema';
+import { Post } from './post.schema';
 import { BadRequestException } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
 import { CreatePostDto } from './dto/create-post.dto';
+import { Types } from 'mongoose';
+import { PostStatus } from './const/post.enum';
 
 describe('PostsService', () => {
   let service: PostsService;
@@ -75,7 +77,7 @@ describe('PostsService', () => {
       expect(mockPostModel.find).toHaveBeenCalledWith(
         expect.objectContaining({
           title: { $regex: 'test', $options: 'i' },
-          status: 2,
+          status: PostStatus.APPROVED,
         }),
       );
       expect(mockSort).toHaveBeenCalledWith({ price: 1 });
@@ -103,9 +105,11 @@ describe('PostsService', () => {
       const mockSort = jest.fn().mockReturnValue({ exec: mockExec });
       mockPostModel.find.mockReturnValue({ sort: mockSort });
 
-      const result = await service.findByUserId('user1');
+      const result = await service.findByUserId('6a51030d2b2b78d3068894a6');
 
-      expect(mockPostModel.find).toHaveBeenCalledWith({ userID: 'user1' });
+      expect(mockPostModel.find).toHaveBeenCalledWith({
+        userID: new Types.ObjectId('6a51030d2b2b78d3068894a6'),
+      });
       expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(result).toEqual(['post1']);
     });
@@ -188,7 +192,7 @@ describe('PostsService', () => {
           category: 'cat',
           category_alias: 'cat-alias',
           title: 'test title',
-          status: 2,
+          status: PostStatus.APPROVED,
         }),
       );
       expect(result).toEqual('createdPost');

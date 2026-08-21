@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Post, PostDocument } from '../schemas/post.schema';
+import { Post, PostDocument } from './post.schema';
+import { PostStatus } from './const/post.enum';
+import { POST_ERROR_MESSAGES } from './posts.consts';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ClientProxy } from '@nestjs/microservices';
@@ -28,13 +30,13 @@ export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @Inject('CORE_SERVICE') private coreServiceClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly limit = 10;
 
   async myAdsAnalytic(userId: string) {
     const posts = await this.postModel
-      .find({ userID: userId as unknown as Types.ObjectId, })
+      .find({ userID: new Types.ObjectId(userId) })
       .select({ status: 1 })
       .lean()
       .exec();
@@ -49,19 +51,19 @@ export class PostsService {
 
     if (posts && posts.length > 0) {
       analytic.block = posts.filter(
-        (o) => (o as { status: number }).status == 0,
+        (o) => o.status === PostStatus.LOCKED,
       ).length;
       analytic.post = posts.filter(
-        (o) => (o as { status: number }).status == 2,
+        (o) => o.status === PostStatus.APPROVED,
       ).length;
       analytic.wait = posts.filter(
-        (o) => (o as { status: number }).status == 1,
+        (o) => o.status === PostStatus.PENDING,
       ).length;
       analytic.done = posts.filter(
-        (o) => (o as { status: number }).status == 3,
+        (o) => o.status === PostStatus.COMPLETED,
       ).length;
       analytic.cancel = posts.filter(
-        (o) => (o as { status: number }).status == 4,
+        (o) => o.status === PostStatus.CANCELED,
       ).length;
     }
 
@@ -71,7 +73,7 @@ export class PostsService {
   async myAds(userId: string, query: Record<string, string>) {
     let page = 1;
     const filter: Record<string, unknown> = {
-      userID: userId as unknown as Types.ObjectId,
+      userID: new Types.ObjectId(userId),
     };
 
     if (query.page) {
@@ -113,7 +115,7 @@ export class PostsService {
       throw new HttpException(
         {
           status: false,
-          msg: 'Kh\u00f4ng t\u00ecm th\u1ea5y tin \u0111\u0103ng ph\u00f9 h\u1ee3p!',
+          msg: POST_ERROR_MESSAGES.NOT_FOUND,
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -122,22 +124,29 @@ export class PostsService {
     const typeNum = parseInt(type, 10);
     const query: Record<string, unknown> = {
       _id: id,
-      userID: userId as unknown as Types.ObjectId,
+      userID: new Types.ObjectId(userId),
     };
     const statusConditions: { status: number }[] = [];
 
     switch (typeNum) {
       case 1:
-        statusConditions.push({ status: 4 });
+        statusConditions.push({ status: PostStatus.CANCELED });
         break;
       case 3:
-        statusConditions.push({ status: 2 });
+        statusConditions.push({ status: PostStatus.APPROVED });
         break;
       case 4:
-        statusConditions.push({ status: 1 }, { status: 2 });
+        statusConditions.push(
+          { status: PostStatus.PENDING },
+          { status: PostStatus.APPROVED },
+        );
         break;
       case 6:
-        statusConditions.push({ status: 3 }, { status: 4 }, { status: 5 });
+        statusConditions.push(
+          { status: PostStatus.COMPLETED },
+          { status: PostStatus.CANCELED },
+          { status: PostStatus.EXPIRED },
+        );
         break;
     }
 
@@ -157,7 +166,7 @@ export class PostsService {
         throw new HttpException(
           {
             status: false,
-            msg: 'C\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i th\u1ea5t b\u1ea1i!',
+            msg: POST_ERROR_MESSAGES.UPDATE_STATUS_FAILED,
           },
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
@@ -166,7 +175,7 @@ export class PostsService {
       throw new HttpException(
         {
           status: false,
-          msg: 'Kh\u00f4ng t\u00ecm th\u1ea5y tin \u0111\u0103ng ph\u00f9 h\u1ee3p!',
+          msg: POST_ERROR_MESSAGES.NOT_FOUND,
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -182,7 +191,7 @@ export class PostsService {
     if (q) {
       filter.title = { $regex: q, $options: 'i' };
     }
-    filter.status = 2;
+    filter.status = PostStatus.APPROVED;
 
     let sortCondition = {};
     switch (sort) {
@@ -211,7 +220,7 @@ export class PostsService {
 
   async findByUserId(userId: string): Promise<PostDocument[]> {
     return this.postModel
-      .find({ userID: userId as unknown as Types.ObjectId })
+      .find({ userID: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -241,17 +250,19 @@ export class PostsService {
   }
 
   async checkPostExists(id: string): Promise<number> {
-    return this.postModel.countDocuments({ _id: id }).exec();
+    return this.postModel
+      .countDocuments({ _id: new Types.ObjectId(id) })
+      .exec();
   }
 
   async create(createPostDto: CreatePostDto): Promise<PostDocument> {
-    // Determine post status, default to 2 (Da duyet/Cho duyet) as per plan
-    const status = 2;
+    // Determine post status, default to APPROVED (Da duyet/Cho duyet) as per plan
+    const status = PostStatus.APPROVED;
 
     const categoryID = createPostDto.categoryID;
 
     if (!categoryID) {
-      throw new BadRequestException('Category is required');
+      throw new BadRequestException(POST_ERROR_MESSAGES.CATEGORY_REQUIRED);
     }
 
     const category = await firstValueFrom<CategoryResponse>(
@@ -261,7 +272,7 @@ export class PostsService {
       ),
     ).catch(() => null);
     if (!category) {
-      throw new BadRequestException('Category not found');
+      throw new BadRequestException(POST_ERROR_MESSAGES.CATEGORY_NOT_FOUND);
     }
 
     let area: LocationResponse | null = null;
@@ -274,7 +285,7 @@ export class PostsService {
         ),
       ).catch(() => null);
       if (!area) {
-        throw new BadRequestException('Area not found');
+        throw new BadRequestException(POST_ERROR_MESSAGES.AREA_NOT_FOUND);
       }
     }
 
@@ -288,7 +299,7 @@ export class PostsService {
         ),
       ).catch(() => null);
       if (!city) {
-        throw new BadRequestException('City not found');
+        throw new BadRequestException(POST_ERROR_MESSAGES.CITY_NOT_FOUND);
       }
     }
 
@@ -332,7 +343,7 @@ export class PostsService {
         ),
       ).catch(() => null);
       if (!category) {
-        throw new BadRequestException('Category not found');
+        throw new BadRequestException(POST_ERROR_MESSAGES.CATEGORY_NOT_FOUND);
       }
       updatePostDto.category = category.name;
       updatePostDto.category_alias = category.alias;
@@ -346,7 +357,7 @@ export class PostsService {
         ),
       ).catch(() => null);
       if (!area) {
-        throw new BadRequestException('Area not found');
+        throw new BadRequestException(POST_ERROR_MESSAGES.AREA_NOT_FOUND);
       }
       updatePostDto.area = area.name;
       updatePostDto.area_alias = area.alias;
@@ -360,7 +371,7 @@ export class PostsService {
         ),
       ).catch(() => null);
       if (!city) {
-        throw new BadRequestException('City not found');
+        throw new BadRequestException(POST_ERROR_MESSAGES.CITY_NOT_FOUND);
       }
       updatePostDto.city = city.name;
       updatePostDto.city_alias = city.alias;

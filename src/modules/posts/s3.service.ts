@@ -17,20 +17,11 @@ export class S3Service {
   constructor(private readonly configService: ConfigService) {
     // AWS credentials loaded from environment variables (never hardcode these)
     this.region =
-      this.configService.get<string>('AWS_REGION') ?? 'ap-southeast-1';
+      this.configService.get<string>('AWS_REGION') ?? 'ap-southeast-2';
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') ?? '';
 
-    console.log('bucketName:: ', this);
-
     this.s3Client = new S3Client({
-      region: this.region,
-      credentials: {
-        // AWS IAM access key ID — set in .env as AWS_ACCESS_KEY_ID
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID') ?? '',
-        // AWS IAM secret access key — set in .env as AWS_SECRET_ACCESS_KEY
-        secretAccessKey:
-          this.configService.get<string>('AWS_SECRET_ACCESS_KEY') ?? '',
-      },
+      region: this.region
     });
   }
 
@@ -47,25 +38,30 @@ export class S3Service {
     fileName: string,
     fileType: string,
   ): Promise<{ presignedUrl: string; imageUrl: string }> {
-    // Generate a unique S3 key to avoid collisions and path-traversal issues
-    const ext = fileName.split('.').pop() ?? 'jpg';
-    const key = `posts/${uuidv4()}.${ext}`;
+    try {
+      // Generate a unique S3 key to avoid collisions and path-traversal issues
+      const ext = fileName.split('.').pop() ?? 'jpg';
+      const key = `posts/${uuidv4()}.${ext}`;
 
-    const command = new PutObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
-      ContentType: fileType,
-    });
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        ContentType: fileType,
+      });
 
-    // Presigned URL expires in 5 minutes — enough time for the browser to upload
-    const presignedUrl = await getSignedUrl(this.s3Client, command, {
-      expiresIn: 300,
-    });
+      // Presigned URL expires in 5 minutes — enough time for the browser to upload
+      const presignedUrl = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 300,
+      });
 
-    // Public URL of the object after it is uploaded
-    // Assumes the bucket has a public-read policy or CloudFront in front
-    const imageUrl = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
+      // Public URL of the object after it is uploaded
+      // Assumes the bucket has a public-read policy or CloudFront in front
+      const imageUrl = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
 
-    return { presignedUrl, imageUrl };
+      return { presignedUrl, imageUrl };
+    } catch (error) {
+      console.error('Error generating presigned URL:', error);
+      throw error;
+    }
   }
 }
