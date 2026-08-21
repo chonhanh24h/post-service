@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
-import { fromIni } from '@aws-sdk/credential-providers';
 
 @Injectable()
 export class S3Service {
@@ -22,10 +21,7 @@ export class S3Service {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') ?? '';
 
     this.s3Client = new S3Client({
-      region: this.region,
-      credentials: fromIni({
-        profile: this.configService.get<string>('AWS_PROFILE'),
-      }),
+      region: this.region
     });
   }
 
