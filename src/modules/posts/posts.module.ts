@@ -14,7 +14,6 @@ import { Post, PostSchema } from './post.schema';
     ClientsModule.registerAsync([
       {
         name: 'CORE_SERVICE',
-        imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.TCP,
           options: {
